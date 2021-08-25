@@ -1,0 +1,31 @@
+{"config":[
+
+    {
+
+        "card": 0,
+        "relay": 2,
+        "type": "toggle",
+        "group": "pistorasiat",
+        "title": "testinappi2"
+
+    },
+    {
+
+        "card": 0,
+        "relay": 3,
+        "type": "toggle",
+        "group": "pistorasiat",
+        "title": "testinappi2"
+
+    },
+    {
+
+        "card": 0,
+        "relay": 1,
+        "type": "toggle",
+        "group": "valot",
+        "title": "valo1"
+
+    }
+]
+}
