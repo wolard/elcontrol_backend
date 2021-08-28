@@ -1,4 +1,4 @@
-{"config":[
+[
 
     {
 
@@ -15,7 +15,7 @@
         "relay": 3,
         "type": "toggle",
         "group": "pistorasiat",
-        "title": "testinappi2"
+        "title": "testinappi1"
 
     },
     {
@@ -28,4 +28,4 @@
 
     }
 ]
-}
+
