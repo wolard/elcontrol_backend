@@ -16,7 +16,11 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-generator": "^4.16.1",
-    "modbus-serial": "^8.0.3"
+    "modbus-serial": "^8.0.3",
+    "rpi-gpio": "^2.1.7",
+    "socket.io": "^4.2.0",
+    "websocket": "^1.0.34",
+    "ws": "^8.2.1"
   },
   "bugs": {
     "url": "https://github.com/wolard/elcontrol_backend/issues"
