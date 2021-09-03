@@ -1,12 +1,19 @@
 const express = require('express');
 const app = express();
 const http = require('http');
-const server = http.createServer(app);
+const server = http.createServer();
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
-var gpio = require('rpi-gpio');
-var val;
-var oldval;
+//var gpio = require('rpi-gpio');
+let arrlightstate ={
+8:false,
+9:false,
+10:false,
+11:false,
+12:false,
+
+
+}
 
 const io = require("socket.io")(server, {
   cors: {
@@ -16,30 +23,17 @@ const io = require("socket.io")(server, {
 
 server.listen(8888);
 
-//var client = new ModbusRTU();
-//const app = express();
+
 app.use(cors());
 app.use(express.json());
 var fs = require('fs');
 //client.connectRTUBuffered("/dev/serial0", { baudRate: 9600 });
 let configjson;
 var client = new ModbusRTU();
-client.connectRTUBuffered("/dev/serial0", { baudRate: 9600 });
-let interval;
+//client.connectRTUBuffered("/dev/serial0", { baudRate: 9600 });
 
-const getApiAndEmit = socket => {
-  const response = new Date();
-  // Emitting a new message. Will be consumed by the client
-  io.on("connection", (socket) => {
-    console.log("New client connected");
-    socket.emit("sdiofjsdiofj");
-    socket.on("disconnect", () => {
-      console.log("Client disconnected");
- 
-    });
-  });
 
-};
+/*
 var timeoutObj = setTimeout(() => {
   console.log('timeout beyond time');
 }, 200);
@@ -56,8 +50,8 @@ gpio.on('change', function(channel, value) {
    
   
   });
+*/
 
-//});
 
 
 configjson=fs.readFileSync('config.json').toString();
@@ -78,7 +72,12 @@ app.post("/light", (req, res, next) => {
    let command=req.body;
    modbushandler(command);
   
-    res.sendStatus(200);
+  
+    arrlightstate[command.relay]=(!arrlightstate[command.relay]);
+    console.log(arrlightstate[command.relay])
+    //res.send (arrlightstate[command.relay]);
+    res.json('{'+command.relay +':' +arrlightstate[command.relay] +'}')
+   // res.sendStatus(200);
 //
 
 

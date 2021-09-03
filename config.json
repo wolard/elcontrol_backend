@@ -3,10 +3,21 @@
     {
 
         "card": 1,
+        "relay": 1,
+        "type": "toggle",
+        "group": "pistorasiat",
+        "title": "tolppa1",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
         "relay": 2,
         "type": "toggle",
         "group": "pistorasiat",
-        "title": "testinappi2"
+        "title": "tolppa2",
+        "status":false
 
     },
     {
@@ -15,16 +26,88 @@
         "relay": 3,
         "type": "toggle",
         "group": "pistorasiat",
-        "title": "testinappi1"
+        "title": "tolppa3",
+        "status":false
 
     },
     {
 
         "card": 1,
-        "relay": 1,
+        "relay": 4,
+        "type": "toggle",
+        "group": "pistorasiat",
+        "title": "tolppa4",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 5,
+        "type": "toggle",
+        "group": "pistorasiat",
+        "title": "tolppa5",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 6,
+        "type": "toggle",
+        "group": "pistorasiat",
+        "title": "tolppa6",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 8,
         "type": "toggle",
         "group": "valot",
-        "title": "valo1"
+        "title": "valo1",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 9,
+        "type": "toggle",
+        "group": "valot",
+        "title": "valo2",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 10,
+        "type": "toggle",
+        "group": "valot",
+        "title": "valo3",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 11,
+        "type": "toggle",
+        "group": "valot",
+        "title": "valo4",
+        "status":false
+
+    },
+    {
+
+        "card": 1,
+        "relay": 12,
+        "type": "toggle",
+        "group": "valot",
+        "title": "valo5",
+        "status":false
 
     }
 ]
