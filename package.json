@@ -16,6 +16,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-generator": "^4.16.1",
+    "gpio": "^0.2.10",
     "modbus-serial": "^8.0.3",
     "rpi-gpio": "^2.1.7",
     "socket.io": "^4.2.0",
