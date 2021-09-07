@@ -1,12 +1,24 @@
 const express = require('express');
 const app = express();
-const http = require('http');
-const server = http.createServer();
+const http = require('http').Server(app);
+const io = require("socket.io")(http, {
+  cors: {
+    origin: "*",
+  },
+});
+http.listen(3000);
+
+
+
+
+
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
 const gpio = require('rpi-gpio');
 
 
+app.use(cors());
+app.use(express.json());
 
 
 
@@ -38,27 +50,13 @@ statemap.forEach((item)=>{
            
 
 
-let arrlightstate ={
-8:false,
-9:false,
-10:false,
-11:false,
-12:false,
 
 
-}
-
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "*",
-  },
-});
-
-server.listen(8888);
 
 
-app.use(cors());
-app.use(express.json());
+
+
+
 var fs = require('fs');
 
 let configjson;
@@ -71,20 +69,38 @@ var timeoutObj = setTimeout(() => {
   console.log('timeout beyond time');
 }, 200);
 
+let sequenceNumberByClient = new Map();
 
-gpio.on('change', function(channel, value) {
+
+io.on("connection", (socket) => {
+  console.info(`Client connected [id=${socket.id}]`);
+  // initialize this client's sequence number
+  sequenceNumberByClient.set(socket, 1);
+  gpio.on('change', function(channel, value) {
 
 
-	clearTimeout(timeoutObj);
-  timeoutObj = setTimeout(() => {
-  let relay=statemap.find(rel => rel.gpio == channel)
-  console.log(relay.relay);
-    io.emit("FromAPI", value);
-  }, 200);
-
-   
+    clearTimeout(timeoutObj);
+    timeoutObj = setTimeout(() => {
+    let relay=statemap.find(rel => rel.gpio == channel)
   
+    console.log(relay.relay+' '+value);
+     socket.emit('my broadcast',{relay:relay.relay,status:value});
+    }, 200);
+  
+     
+    
+    });
+  // when socket disconnects, remove it from the list:
+  socket.on("disconnect", () => {
+      sequenceNumberByClient.delete(socket);
+      console.info(`Client gone [id=${socket.id}]`);
   });
+});
+
+
+
+
+
 
 
 
@@ -108,11 +124,12 @@ app.post("/light", (req, res, next) => {
    modbushandler(command);
   
   
-    arrlightstate[command.relay]=(!arrlightstate[command.relay]);
-    console.log(arrlightstate[command.relay])
+   // arrlightstate[command.relay]=(!arrlightstate[command.relay]);
+   // console.log(arrlightstate[command.relay])
     //res.send (arrlightstate[command.relay]);
-    res.json('{'+command.relay +':' +arrlightstate[command.relay] +'}')
-   // res.sendStatus(200);
+    res.sendStatus(200);
+   // res.json('{'+command.relay +':' +arrlightstate[command.relay] +'}')
+    
 //
 
 
@@ -132,6 +149,3 @@ app.get("/ledon", (req, res, next) => {
    // ledoff();
     res.json({"ledi":"pois"});
    });
-app.listen(3000, () => {
- console.log("Server running on port 3000");
-});
