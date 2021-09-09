@@ -27,7 +27,7 @@ class sqLiteHandler {
         close() {
             return new Promise((resolve, reject)=> {
                 this.db.close()
-                resolve(true)
+                resolve(console.log('closed'))
             }) 
 
         }
