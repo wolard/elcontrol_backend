@@ -15,6 +15,37 @@ http.listen(3000);
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
 const gpio = require('rpi-gpio');
+const sqlite3 = require('sqlite3').verbose();
+const sqLiteHandler =require('./sqlitehandler/sqlitehandler')
+
+let r
+let sql = "SELECT * FROM elcontrol"
+
+let loadd=new sqLiteHandler('./db/elcontrol.db');
+
+
+
+
+(async ()=> {
+   
+try
+{
+
+    await loadd.openSqlite();
+    r=await loadd.fetchall(sql, [])
+    await loadd.close();
+  console.log(r);
+} catch(e) {
+    console.log(e);
+}
+
+  
+})();
+
+
+
+
+// open database in memory
 
 
 app.use(cors());
@@ -138,7 +169,7 @@ app.post("/light", (req, res, next) => {
  });
 app.get("/init", (req, res, next) => {
  // console.log(req.body);
-  res.send(ConfObj)
+  res.send(r)
    
 });
 app.get("/ledon", (req, res, next) => {
@@ -149,3 +180,4 @@ app.get("/ledon", (req, res, next) => {
    // ledoff();
     res.json({"ledi":"pois"});
    });
+  
