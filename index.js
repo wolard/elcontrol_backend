@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt')
 const dotenv = require('dotenv');
 const express = require('express');
 const app = express();
@@ -42,16 +43,21 @@ let loadd = new sqLiteHandler('./db/elcontrol.db');
     await loadd.openSqlite();
     r = await loadd.fetchall(sql, [])
     await loadd.close()
-    console.log(r);
+  //  console.log(r);
   } catch (e) {
     console.log(e);
   }
 
 
 })();
-
-
-
+/*
+async function hashPassword(password) {
+  const salt = await bcrypt.genSalt(10)
+  const hash = await bcrypt.hash(password, salt)
+  console.log(hash)
+}
+hashPassword('kopo2008');
+*/
 
 var timeoutObj = setTimeout(() => {
   console.log('timeout beyond time');
@@ -120,4 +126,20 @@ app.get("/init", (req, res, next) => {
 
 });
 
-  
+app.post("/login", async (req, res, next) => {
+  const body = req.body;
+ // const user = await User.findOne({ email: body.email });
+ const user='wolard'
+  if (user) {
+    // check user password with hashed password stored in the database
+    const validPassword = await bcrypt.compare(body.password, 'kopo2008');
+    if (validPassword) {
+      res.status(200).json({ message: "Valid password" });
+    } else {
+      res.status(400).json({ error: "Invalid Password" });
+    }
+  } else {
+    res.status(401).json({ error: "User does not exist" });
+  }
+
+});
