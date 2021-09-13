@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
@@ -20,7 +22,11 @@ client.connectRTUBuffered("/dev/serial0", {
   baudRate: 9600
 });
 
+// get config vars
+dotenv.config();
 
+// access config var
+process.env.TOKEN_SECRET;
 statemap.forEach((item) => {
   gpio.setup(item.gpio, gpio.DIR_IN, gpio.EDGE_BOTH); //initialize gpio according to statemap
 
@@ -89,7 +95,17 @@ const modbushandler = (command) => {
   client.writeFC6(command.card, command.relay, 1280);
 
 }
+app.post('/signin', (req, res) => {
+  // ...
 
+  const token = generateAccessToken({ username: req.body.username });
+  res.json(token);
+
+  // ...
+});
+const  generateAccessToken= (username)=> {
+  return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+}
 
 app.post("/light", (req, res, next) => {
   // console.log(req.body);
