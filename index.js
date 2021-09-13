@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const auth =require('./middleware/auth')
 const bcrypt = require('bcrypt')
 const dotenv = require('dotenv');
 const express = require('express');
@@ -24,7 +25,7 @@ client.connectRTUBuffered("/dev/serial0", {
 });
 
 // get config vars
-dotenv.config();
+//config();
 
 // access config var
 process.env.TOKEN_SECRET;
@@ -34,31 +35,20 @@ statemap.forEach((item) => {
 })
 
 
-let r //data from database
-let sql = "SELECT * FROM elcontrol"
+
+
 let loadd = new sqLiteHandler('./db/elcontrol.db');
-(async () => {                  //load buttons from database
-  try {
-
-    await loadd.openSqlite();
-    r = await loadd.fetchall(sql, [])
-    await loadd.close()
-  //  console.log(r);
-  } catch (e) {
-    console.log(e);
-  }
 
 
-})();
-/*
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(10)
   const hash = await bcrypt.hash(password, salt)
   console.log(hash)
 }
-hashPassword('kopo2008');
-*/
-
+//hashPassword('kopo2008');
+const salt =  bcrypt.genSaltSync(10);
+const hash = bcrypt.hashSync('kopo2008', salt)
+console.log('salt',salt);
 var timeoutObj = setTimeout(() => {
   console.log('timeout beyond time');
 }, 400);
@@ -71,12 +61,12 @@ io.on("connection", (socket) => {
   // initialize this client's sequence number
   sequenceNumberByClient.set(socket, 1);
 
-  gpio.on('change', function (channel, value) {
+  io.on('change', function (channel, value) {
 
 
     clearTimeout(timeoutObj);
     timeoutObj = setTimeout(() => {
-      let relay = statemap.find(rel => rel.gpio == channel)
+      let relay = find(rel => rel.gpio == channel)
       console.log(relay.relay + ' ' + value);
       socket.emit('my broadcast', {
         relay: relay.relay,
@@ -110,7 +100,7 @@ app.post('/signin', (req, res) => {
   // ...
 });
 const  generateAccessToken= (username)=> {
-  return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+  return sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
 }
 
 app.post("/light", (req, res, next) => {
@@ -120,26 +110,60 @@ app.post("/light", (req, res, next) => {
   res.sendStatus(200);
 
 });
-app.get("/init", (req, res, next) => {
+app.get("/init", async  (req, res, next) => {
   // console.log(req.body);
-  res.send(r)
+  let r;
+  let sql;
+  try {
+     sql = "SELECT * FROM elcontrol"
+    await loadd.openSqlite();
+     r = await loadd.fetchall(sql, [])
+    await loadd.close()
+  //  console.log(r);
+  } catch (e) {
+    console.log(e);
+  }
+  res.status(200).send(r)
 
 });
 
 app.post("/login", async (req, res, next) => {
-  const body = req.body;
- // const user = await User.findOne({ email: body.email });
- const user='wolard'
-  if (user) {
-    // check user password with hashed password stored in the database
-    const validPassword = await bcrypt.compare(body.password, 'kopo2008');
-    if (validPassword) {
-      res.status(200).json({ message: "Valid password" });
-    } else {
-      res.status(400).json({ error: "Invalid Password" });
+  try {
+    // Get user input
+    const { name, password } = req.body;
+   // const salt='1234';
+    
+    
+    // Validate user input
+    if (!(name && password)) {
+      res.status(400).send("All input is required");
     }
-  } else {
-    res.status(401).json({ error: "User does not exist" });
-  }
+    // Validate if user exist in our database
+    //const user = await User.findOne({ email });
+      const user='wolard'
+      
+      const pw='$2b$10$O5MYfcYnf/a6ItGHAbL/JeolobTPlCHDTVNuAd12/ZCyo4O9C0ylG'
+      if (user && (await bcrypt.compare(password, hash))) {
+     //if(user){ 
+     // Create token
+      const token = jwt.sign(
+        { user_id: 'wolard' },
+      //  process.env.TOKEN_KEY,
+      'dinfwicbnweiocnoweic',  
+      {
+          expiresIn: "2h",
+        }
+      );
 
+      // save user token
+    
+ 
+      // user
+      res.status(200).send({user:'wolard',token:token});
+    }
+    res.status(400).send("Invalid Credentials");
+  } catch (err) {
+    console.log(err);
+  }
+  // Our register logic ends here
 });
