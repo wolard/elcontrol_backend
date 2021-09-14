@@ -36,31 +36,17 @@ statemap.forEach((item) => {
 
 
 let r //data from database
-let sql = "SELECT * FROM elcontrol"
+
 let loadd = new sqLiteHandler('./db/elcontrol.db');
-(async () => {                  //load buttons from database
-  try {
-
-    await loadd.openSqlite();
-    r = await loadd.fetchall(sql, [])
-    await loadd.close()
-  //  console.log(r);
-  } catch (e) {
-    console.log(e);
-  }
 
 
-})();
-
-async function hashPassword(password) {
-  const salt = await bcrypt.genSalt(10)
-  const hash = await bcrypt.hash(password, salt)
-  console.log(hash)
+function hashPassword(password) {
+  const salt = bcrypt.genSaltSync(10)
+ return  bcrypt.hashSync(password, salt)
+ 
 }
-//hashPassword('kopo2008');
-const salt =  bcrypt.genSaltSync(10);
-const hash = bcrypt.hashSync('kopo2008', salt)
-console.log('salt',salt);
+let hashpw=hashPassword('kopo2008');
+console.log('hashpw',hashpw)
 var timeoutObj = setTimeout(() => {
   console.log('timeout beyond time');
 }, 400);
@@ -122,28 +108,45 @@ app.post("/light", (req, res, next) => {
   res.sendStatus(200);
 
 });
-app.get("/init", auth, (req, res, next) => {
-  // console.log(req.body);
-  res.send(r)
+app.get("/init", async (req, res, next) => {
+  try {
+
+    await loadd.openSqlite();
+    let sql = "SELECT * FROM elcontrol"
+    r = await loadd.fetchall(sql, [])
+    await loadd.close()
+    res.send(r)
+  } catch (e) {
+    console.log(e);
+  }
+ 
 
 });
 
 app.post("/login", async (req, res, next) => {
   try {
-    // Get user input
-    const { name, password } = req.body;
-   // const salt='1234';
+   
+    const { user, password } = req.body;
+   
     
     
-    // Validate user input
-    if (!(name && password)) {
+  
+    if (!(user && password)) {
       res.status(400).send("All input is required");
     }
     // Validate if user exist in our database
     //const user = await User.findOne({ email });
-      const user='wolard'
+    
+      await loadd.openSqlite();
+      let sql = "SELECT * FROM auth where name=?"
+      r = await loadd.fetchall(sql, [user])
+      const { name, hash } = r[0];
+     
+   
+      await loadd.close()
+     
+      console.log(name);
       
-      const pw='$2b$10$O5MYfcYnf/a6ItGHAbL/JeolobTPlCHDTVNuAd12/ZCyo4O9C0ylG'
       if (user && (await bcrypt.compare(password, hash))) {
      //if(user){ 
      // Create token
@@ -162,7 +165,7 @@ app.post("/login", async (req, res, next) => {
       // user
       res.status(200).send({user:'wolard',token:token});
     }
-    res.status(400).send("Invalid Credentials");
+   else res.status(400).send("Invalid Credentials");
   } catch (err) {
     console.log(err);
   }
