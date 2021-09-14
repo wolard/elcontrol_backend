@@ -40,6 +40,11 @@ statemap.forEach((item) => {
 let loadd = new sqLiteHandler('./db/elcontrol.db');
 
 
+<<<<<<< HEAD
+=======
+})();
+
+>>>>>>> 9347a67ad22008fcd69f3167c8d35130093c95ee
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(10)
   const hash = await bcrypt.hash(password, salt)
@@ -110,7 +115,7 @@ app.post("/light", (req, res, next) => {
   res.sendStatus(200);
 
 });
-app.get("/init", async  (req, res, next) => {
+app.get("/init", auth, (req, res, next) => {
   // console.log(req.body);
   let r;
   let sql;
