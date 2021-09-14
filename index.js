@@ -149,7 +149,10 @@ app.post("/login", async (req, res, next) => {
       name=r[0].name;
       hash=r[0].hash;
      }
-    
+     else{
+       name=null;
+       hash=null;
+     }
      
 
   
