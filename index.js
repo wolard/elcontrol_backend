@@ -16,7 +16,8 @@ const ModbusRTU = require("modbus-serial");
 const gpio = require('rpi-gpio');
 const sqlite3 = require('sqlite3').verbose();
 const sqLiteHandler = require('./sqlitehandler/sqlitehandler')
-const statemap =require('./statemap/statemap')
+const statemap =require('./statemap/statemap');
+const { Hash } = require('crypto');
 app.use(cors());
 app.use(express.json());
 var client = new ModbusRTU();
@@ -127,27 +128,40 @@ app.post("/login", async (req, res, next) => {
   try {
    
     const { user, password } = req.body;
-   
+    let name=null;
+    let hash=null;
     
     
   
     if (!(user && password)) {
       res.status(400).send("All input is required");
     }
+   
     // Validate if user exist in our database
     //const user = await User.findOne({ email });
     
       await loadd.openSqlite();
       let sql = "SELECT * FROM auth where name=?"
       r = await loadd.fetchall(sql, [user])
-      const { name, hash } = r[0];
+      console.log(r);
+     if(r[0]){
+      console.log(r);
+      name=r[0].name;
+      hash=r[0].hash;
+     }
+     else{
+       name=null;
+       hash=null;
+     }
      
+
+  
    
       await loadd.close()
      
-      console.log(name);
+     
       
-      if (user && (await bcrypt.compare(password, hash))) {
+      if (name && (await bcrypt.compare(password, hash))) {
      //if(user){ 
      // Create token
       const token = jwt.sign(
