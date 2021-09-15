@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const auth =require('./middleware/auth')
+const auth = require('./middleware/auth')
 const bcrypt = require('bcrypt')
 const dotenv = require('dotenv');
 const express = require('express');
@@ -16,8 +16,10 @@ const ModbusRTU = require("modbus-serial");
 const gpio = require('rpi-gpio');
 const sqlite3 = require('sqlite3').verbose();
 const sqLiteHandler = require('./sqlitehandler/sqlitehandler')
-const statemap =require('./statemap/statemap');
-const { Hash } = require('crypto');
+const statemap = require('./statemap/statemap');
+const {
+  Hash
+} = require('crypto');
 app.use(cors());
 app.use(express.json());
 var client = new ModbusRTU();
@@ -43,11 +45,11 @@ let loadd = new sqLiteHandler('./db/elcontrol.db');
 
 function hashPassword(password) {
   const salt = bcrypt.genSaltSync(10)
- return  bcrypt.hashSync(password, salt)
- 
+  return bcrypt.hashSync(password, salt)
+
 }
-let hashpw=hashPassword('kopo2008');
-console.log('hashpw',hashpw)
+let hashpw = hashPassword('kopo2008');
+console.log('hashpw', hashpw)
 var timeoutObj = setTimeout(() => {
   console.log('timeout beyond time');
 }, 400);
@@ -90,19 +92,8 @@ const modbushandler = (command) => {
   client.writeFC6(command.card, command.relay, 1280);
 
 }
-app.post('/signin', (req, res) => {
-  // ...
 
-  const token = generateAccessToken({ username: req.body.username });
-  res.json(token);
-
-  // ...
-});
-const  generateAccessToken= (username)=> {
-  return sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
-}
-
-app.post("/light", (req, res, next) => {
+app.post("/light", auth,(req, res, next) => {
   // console.log(req.body);
   let command = req.body;
   modbushandler(command);
@@ -120,55 +111,57 @@ app.get("/init", auth, async (req, res, next) => {
   } catch (e) {
     console.log(e);
   }
- 
+
 
 });
 
 app.post("/login", async (req, res, next) => {
   try {
-   
-    const { user, password } = req.body;
-   
-    
-    
-  
+
+    const {
+      user,
+      password
+    } = req.body;
+
     if (!(user && password)) {
       res.status(400).send("All input is required");
     }
-   
+
     // Validate if user exist in our database
     //const user = await User.findOne({ email });
-    
-      await loadd.openSqlite();
-      let sql = "SELECT * FROM auth where name=?"
-     const dbuser = await loadd.fetchone(sql, [user])
-     
-      console.log(dbuser);
-     
-     await loadd.close()
-     
-     
-      
-      if (dbuser && (await bcrypt.compare(password, dbuser.hash))) {
-     //if(user){ 
-     // Create token
-      const token = jwt.sign(
-        { user: dbuser.name },
-      //  process.env.TOKEN_KEY,
-      'dinfwicbnweiocnoweic',  
-      {
+
+    await loadd.openSqlite();
+    let sql = "SELECT * FROM auth where name=?"
+    const dbuser = await loadd.fetchone(sql, [user])
+
+    console.log(dbuser);
+
+    await loadd.close()
+
+
+
+    if (dbuser && (await bcrypt.compare(password, dbuser.hash))) {
+      //if(user){ 
+      // Create token
+      const token = jwt.sign({
+          user: dbuser.name
+        },
+        //  process.env.TOKEN_KEY,
+        'dinfwicbnweiocnoweic', {
           expiresIn: "2h",
         }
       );
 
       // save user token
-    dbuser.token=token;
-    console.log(dbuser);
- 
+      dbuser.token = token;
+      console.log(dbuser);
+
       // user
-      res.status(200).send({user:'wolard',token:token});
-    }
-   else res.status(400).send("Invalid Credentials");
+      res.status(200).send({
+        user: 'wolard',
+        token: token
+      });
+    } else res.status(400).send("Invalid Credentials");
   } catch (err) {
     console.log(err);
   }
