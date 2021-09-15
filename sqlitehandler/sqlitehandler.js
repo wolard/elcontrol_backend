@@ -24,6 +24,16 @@ class sqLiteHandler {
                 })
             }) 
         }
+        fetchone(query, params) {
+    return new Promise((resolve, reject) => {
+        this.db.get(query, params, (err, row) =>  {
+            if(err) reject("Read error: " + err.message)
+            else {
+                resolve(row)
+            }
+        })
+    }) 
+}
         close() {
             return new Promise((resolve, reject)=> {
                 this.db.close()

@@ -36,7 +36,7 @@ statemap.forEach((item) => {
 })
 
 
-let r //data from database
+let dbuser //data from database
 
 let loadd = new sqLiteHandler('./db/elcontrol.db');
 
@@ -109,14 +109,14 @@ app.post("/light", (req, res, next) => {
   res.sendStatus(200);
 
 });
-app.get("/init", async (req, res, next) => {
+app.get("/init", auth, async (req, res, next) => {
   try {
 
     await loadd.openSqlite();
     let sql = "SELECT * FROM elcontrol"
-    r = await loadd.fetchall(sql, [])
+    let lights = await loadd.fetchall(sql, [])
     await loadd.close()
-    res.send(r)
+    res.status(200).send(lights)
   } catch (e) {
     console.log(e);
   }
@@ -128,8 +128,7 @@ app.post("/login", async (req, res, next) => {
   try {
    
     const { user, password } = req.body;
-    let name=null;
-    let hash=null;
+   
     
     
   
@@ -142,27 +141,19 @@ app.post("/login", async (req, res, next) => {
     
       await loadd.openSqlite();
       let sql = "SELECT * FROM auth where name=?"
-      r = await loadd.fetchall(sql, [user])
-      console.log(r);
-     if(r[0]){
-      console.log(r);
-      name=r[0].name;
-      hash=r[0].hash;
-     }
-    
+     const dbuser = await loadd.fetchone(sql, [user])
      
-
-  
-   
-      await loadd.close()
+      console.log(dbuser);
+     
+     await loadd.close()
      
      
       
-      if (name && (await bcrypt.compare(password, hash))) {
+      if (dbuser && (await bcrypt.compare(password, dbuser.hash))) {
      //if(user){ 
      // Create token
       const token = jwt.sign(
-        { user_id: 'wolard' },
+        { user: dbuser.name },
       //  process.env.TOKEN_KEY,
       'dinfwicbnweiocnoweic',  
       {
@@ -171,7 +162,8 @@ app.post("/login", async (req, res, next) => {
       );
 
       // save user token
-    
+    dbuser.token=token;
+    console.log(dbuser);
  
       // user
       res.status(200).send({user:'wolard',token:token});
