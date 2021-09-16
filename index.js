@@ -4,13 +4,16 @@ const bcrypt = require('bcrypt')
 const dotenv = require('dotenv');
 const express = require('express');
 const app = express();
-const http = require('http').Server(app);
-const io = require("socket.io")(http, {
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server,{
   cors: {
     origin: "*",
   },
 });
-http.listen(3000);
+ 
+server.listen(3000);
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
 const gpio = require('rpi-gpio');
