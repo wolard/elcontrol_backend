@@ -32,11 +32,13 @@ client.connectRTUBuffered("/dev/serial0", {
 
 // access config var
 process.env.TOKEN_SECRET;
+
 statemap.forEach((item) => {
   gpio.setup(item.gpio, gpio.DIR_IN, gpio.EDGE_BOTH); //initialize gpio according to statemap
 
 })
 
+//gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH);
 
 let dbuser //data from database
 
@@ -62,12 +64,12 @@ io.on("connection", (socket) => {
   // initialize this client's sequence number
   sequenceNumberByClient.set(socket, 1);
 
-  io.on('change', function (channel, value) {
+  gpio.on('change', function (channel, value) {
 
 
     clearTimeout(timeoutObj);
     timeoutObj = setTimeout(() => {
-      let relay = find(rel => rel.gpio == channel)
+      let relay = statemap.find(rel => rel.gpio == channel)
       console.log(relay.relay + ' ' + value);
       socket.emit('my broadcast', {
         relay: relay.relay,
