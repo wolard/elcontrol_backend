@@ -20,6 +20,7 @@
     "express-generator": "^4.16.1",
     "gpio": "^0.2.10",
     "jsonwebtoken": "^8.5.1",
+    "modbus": "^1.1.1",
     "modbus-serial": "^8.0.3",
     "nodemon": "^2.0.12",
     "rpi-gpio": "^2.1.7",
