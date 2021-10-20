@@ -21,20 +21,14 @@ const ModbusRTU = require("modbus-serial");
 const sqlite3 = require('sqlite3').verbose();
 const sqLiteHandler = require('./sqlitehandler/sqlitehandler')
 const statemap = require('./statemap/statemap');
+const modbushandle = require('./modbushandle/modbushandle');
 const {
   Hash
 } = require('crypto');
 app.use(cors());
 app.use(express.json());
-var client = new ModbusRTU();
 
-const  connect = async () =>
-{
- await client.connectRTUBuffered("/dev/ttySC0", {baudRate: 9600})
- client.setID(1);
- client.setTimeout(100);
 
-}
 
 
 // get config vars
@@ -110,10 +104,10 @@ const modbushandler  =  async (command) => {
  
 }
 
-app.post("/light", auth, (req, res, next) => {
+app.post("/light", auth, async  (req, res, next) => {
   // console.log(req.body);
   let command = req.body;
-  modbushandler(command);
+  await modbushandle(command.relay);
   res.sendStatus(200);
 
 });
