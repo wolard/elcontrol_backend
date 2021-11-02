@@ -63,26 +63,11 @@ var timeoutObj = setTimeout(() => {
 let sequenceNumberByClient = new Map();
 
 
-io.on("connection", (socket) => {
+io.on("connection",  (socket) =>  {
   console.info(`Client connected [id=${socket.id}]`);
   // initialize this client's sequence number
   sequenceNumberByClient.set(socket, 1);
-  setInterval(() => {
-    try {
 
-      await loadd.openSqlite();
-      let sql = "SELECT * FROM kwh where id=?"
-      const kwhs = await loadd.fetchone(sql, [1])
-  
-      console.log('user',dbuser);
-  
-      await loadd.close()
-      res.status(200).send(lights)
-    } catch (e) {
-      console.log(e);
-    }
-    
-  }, 10000);
 
   /*
   gpio.on('change', function (channel, value) {
