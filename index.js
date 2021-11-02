@@ -149,11 +149,13 @@ app.post("/login", async (req, res, next) => {
       //if(user){ 
       // Create token
       const token = jwt.sign({
-          user: dbuser.name
+          user: dbuser.name,
+          role:dbuser.role
         },
         //  process.env.TOKEN_KEY,
         'dinfwicbnweiocnoweic', {
           expiresIn: "2h",
+          
         }
       );
 
