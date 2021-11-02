@@ -67,7 +67,24 @@ io.on("connection", (socket) => {
   console.info(`Client connected [id=${socket.id}]`);
   // initialize this client's sequence number
   sequenceNumberByClient.set(socket, 1);
-/*
+  setInterval(() => {
+    try {
+
+      await loadd.openSqlite();
+      let sql = "SELECT * FROM kwh where id=?"
+      const kwhs = await loadd.fetchone(sql, [1])
+  
+      console.log('user',dbuser);
+  
+      await loadd.close()
+      res.status(200).send(lights)
+    } catch (e) {
+      console.log(e);
+    }
+    
+  }, 10000);
+
+  /*
   gpio.on('change', function (channel, value) {
 
 
@@ -94,15 +111,7 @@ io.on("connection", (socket) => {
 
 
 
-const modbushandler  =  async (command) => {
-  //const python = spawn('python3', ['modbushandle.py', command.relay]);
-  await connect();
-  await client.writeRegister (command.relay, 1280)
-  .catch(function(e) {
-      console.log(e.message); })
-      client.close(console.log("closed"));
- 
-}
+
 
 app.post("/light", auth, async  (req, res, next) => {
   // console.log(req.body);
@@ -145,7 +154,7 @@ app.post("/login", async (req, res, next) => {
     let sql = "SELECT * FROM auth where name=?"
     const dbuser = await loadd.fetchone(sql, [user])
 
-    console.log(dbuser);
+    console.log('user',dbuser);
 
     await loadd.close()
 
