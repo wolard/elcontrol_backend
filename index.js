@@ -65,28 +65,22 @@ let sequenceNumberByClient = new Map();
 
 io.on("connection",  (socket) =>  {
   console.info(`Client connected [id=${socket.id}]`);
+  socket.join('chat')
   // initialize this client's sequence number
   sequenceNumberByClient.set(socket, 1);
+  socket.on('python message', (msg) => {
+    console.log('message: ' + msg);
+  });
+  socket.on('join', (room) => {
+    console.log(`Socket ${socket.id} joining ${room}`);
+    socket.join(room);
+ });
+ socket.on('chat', (data) => {
+  const { message, room } = data;
+  console.log(`msg: ${message}, room: ${room}`);
+  io.to(room).emit('chat', message);
+});
 
-
-  /*
-  gpio.on('change', function (channel, value) {
-
-
-    clearTimeout(timeoutObj);
-    timeoutObj = setTimeout(() => {
-      let relay = statemap.find(rel => rel.gpio == channel)
-      console.log(relay.relay + ' ' + value);
-      socket.emit('my broadcast', {
-        relay: relay.relay,
-        status: value
-      });
-    }, 400);
-
-
-
-  });^
-  */
   // when socket disconnects, remove it from the list:
   socket.on("disconnect", () => {
     sequenceNumberByClient.delete(socket);
@@ -161,7 +155,7 @@ app.post("/login", async (req, res, next) => {
 
       // save user token
       dbuser.token = token;
-      console.log(dbuser);
+     // console.log(dbuser);
 
       // user
       res.status(200).send({

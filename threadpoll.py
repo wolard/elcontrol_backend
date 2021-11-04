@@ -30,6 +30,7 @@ import time
 import threading
 import numpy as np
 import asyncio
+import socketio
 
 try:
     from IOPi import IOPi
@@ -44,88 +45,117 @@ except ImportError:
         raise ImportError(
             "Failed to import library from parent folder")
 pulses=[0,0,0,0]
-pulses1=0
-pulses2=0
+switches=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
 iobus = IOPi(0x20)
+iobus2 = IOPi(0x21)
 
     # Set all pins on the IO bus to be inputs with internal pull-ups enabled.
   #sqlite3
 #db.fetchdb(con)
     
+iobus2.set_port_pullups(0, 0xFF)
+iobus2.set_port_pullups(1, 0xFF)
 iobus.set_port_pullups(0, 0xFF)
 iobus.set_port_pullups(1, 0xFF)
 iobus.set_port_direction(0, 0xFF)
 iobus.set_port_direction(1, 0xFF)
+iobus2.set_port_direction(0, 0xFF)
+iobus2.set_port_direction(1, 0xFF)
 
     # Invert both ports so pins will show 1 when grounded
 iobus.invert_port(0, 0xFF)
 iobus.invert_port(1, 0xFF)
+iobus2.invert_port(0, 0xFF)
+iobus2.invert_port(1, 0xFF)
+
 
     # Set the interrupt polarity to be active high and mirroring disabled, so
     # pins 1 to 8 trigger INT A and pins 9 to 16 trigger INT B
-iobus.set_interrupt_polarity(1)
-iobus.mirror_interrupts(0)
+iobus2.set_interrupt_polarity(1)
+iobus2.mirror_interrupts(0)
 
     # Set the interrupts default value to 0x00 so the interrupt will trigger when any pin registers as true
-iobus.set_interrupt_defaults(0, 0x00)
-iobus.set_interrupt_defaults(1, 0x00)
+iobus2.set_interrupt_defaults(0, 0x00)
+iobus2.set_interrupt_defaults(1, 0x00)
 
     # Set the interrupt type to be 1 for ports A and B so an interrupt is
     # fired when the pin matches the default value
-iobus.set_interrupt_type(0, 0xFF)
-iobus.set_interrupt_type(1, 0xFF)
+iobus2.set_interrupt_type(0, 0xFF)
+iobus2.set_interrupt_type(1, 0xFF)
 
     # Enable interrupts for all pins
-iobus.set_interrupt_on_port(0, 0xFF)
-iobus.set_interrupt_on_port(1, 0xFF)
-
-
-
-  
+iobus2.set_interrupt_on_port(0, 0xFF)
+iobus2.set_interrupt_on_port(1, 0xFF)
 class poller(threading.Thread):
-    def poll(self, pin):
-        while 1:            
-            # get the interrupt status for INTA
-            if iobus.read_pin(pin)==1:
-                pulses[pin-1]=pulses[pin-1]+1
-                print(pulses)
-                time.sleep(0.5)
-            else:
-                time.sleep(0.02)
-           
-def writedb():
-    con=db.connect()
-   
+        
+        def poll(self, pin):
+            while 1:            
+             # get the interrupt status for INTA
+                if iobus.read_pin(pin)==1:
+                
+                
+                    pulses[pin-1]=pulses[pin-1]+1
+                    db.updatedb((pulses[pin-1],(pin))) 
+                    print(pulses)
+                    time.sleep(0.5)
+                else:
+                    time.sleep(0.02)
+                 
+async def main():
+
+    sio = socketio.AsyncClient()
+    await sio.connect('http://localhost:3000')
+    await sio.emit('join','chat')
+    print('my sid is', sio.sid)
+    
+
     while 1:
-  
-        db.updatedb(con,(pulses[0],pulses[1],pulses[2],pulses[3],1))       
-        print('writing')
-        db.fetchdb(con)
-
-        time.sleep(10)
-       
-
-
-def main():
-
-      '''
-    Main program function
-    '''
     
-    
-    
+        # read the interrupt status for each port.  
+        # If the status is not 0 then an interrupt has occured on one of the pins 
+        # so read the value from the interrupt capture.
 
+        if (iobus2.read_interrupt_status(0) != 0):
+            
+            
+            for i in range(len(switches)):
+                pinread=iobus2.read_pin(i+1)
+                if (pinread==1) and (pinread != switches[i]):
+                    swnum=i
+                    switches[i]=1
+                    print(switches)
+                    await sio.emit('chat', {'message':{'num':swnum,'state':pinread},'room':'chat'})
 
+                elif (pinread==0) and (pinread != switches[i]):
+                    switches[i]=0
+                    swnum=i
+                    print(switches)
+                    await sio.emit('chat', {'message':{'num':swnum,'state':pinread},'room':'chat'})
+                    
+               
+                
 
-
-if __name__ == "__main__":
-  
-  poller1=poller()
-  for i in range(1,10):
+            
+            
+        await asyncio.sleep(1)
+poller1=poller()
+for i in range(1,10):
     threading.Thread(target=poller1.poll, args=(i,)).daemon
     threading.Thread(target=poller1.poll, args=(i,)).start()
-threading.Thread(target=writedb, ).daemon
-threading.Thread(target=writedb ).start()
+
+
+
+
+    
+
+  
+    
+   
+if __name__ == "__main__":
+        
+        asyncio.run(main())
+           
 
 
   
