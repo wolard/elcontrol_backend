@@ -4,6 +4,15 @@ class sqLiteHandler {
     constructor(path) {
         this.path=path;
     }
+    openSqlitesync()  {
+       
+            this.db = new sqlite3.Database(this.path, 
+                (err)=> {
+                    if(err) console.log(err.message)
+                    else    console.log('opened');
+                })   
+           
+    }
      openSqlite()  {
             return new Promise((resolve, reject) => {
                 this.db = new sqlite3.Database(this.path, 
@@ -34,11 +43,29 @@ class sqLiteHandler {
         })
     }) 
 }
+        update(query, params) {
+    
+        this.db.run(query, params, (err, row) =>  {
+            if(err)     return console.error(err.message);
+            else {
+                console.log(`Row(s) updated: ${this.db.changes}`);
+            }
+        })
+    
+}
         close() {
             return new Promise((resolve, reject)=> {
                 this.db.close()
                 resolve()
             }) 
+
+        }
+        
+        closesync() {
+           
+                this.db.close()
+              console.log('closed')
+        
 
         }
 }

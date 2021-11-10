@@ -18,7 +18,6 @@ server.listen(3000);
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
 //const gpio = require('rpi-gpio');
-const sqlite3 = require('sqlite3').verbose();
 const sqLiteHandler = require('./sqlitehandler/sqlitehandler')
 const statemap = require('./statemap/statemap');
 const modbushandle = require('./modbushandle/modbushandle');
@@ -27,26 +26,13 @@ const {
 } = require('crypto');
 app.use(cors());
 app.use(express.json());
+const db = require("./models/index.js");
+const authorize = db.authorize;
+const elcontrol=db.elcontrol;
 
+const Op = db.Sequelize.Op;
 
-
-
-// get config vars
-//config();
-
-// access config var
 process.env.TOKEN_SECRET;
-/*
-statemap.forEach((item) => {
-  gpio.setup(item.gpio, gpio.DIR_IN, gpio.EDGE_BOTH); //initialize gpio according to statemap
-
-})
-*/
-//gpio.setup(16, gpio.DIR_IN, gpio.EDGE_BOTH);
-
-let dbuser //data from database
-
-let loadd = new sqLiteHandler('./db/elcontrol.db');
 
 
 function hashPassword(password) {
@@ -63,7 +49,7 @@ var timeoutObj = setTimeout(() => {
 let sequenceNumberByClient = new Map();
 
 
-io.on("connection",  (socket) =>  {
+io.on("connection",async (socket) =>  {
   console.info(`Client connected [id=${socket.id}]`);
   socket.join('chat')
   // initialize this client's sequence number
@@ -75,10 +61,23 @@ io.on("connection",  (socket) =>  {
     console.log(`Socket ${socket.id} joining ${room}`);
     socket.join(room);
  });
- socket.on('chat', (data) => {
+ socket.on('chat',async (data) => {
   const { message, room } = data;
   console.log(`msg: ${message}, room: ${room}`);
+
+  console.log(message.pulses)
+  for (var i = 0; i < message.pulses.length; i++) {
+    const outlet = await elcontrol.findOne({ where: { id: (i+1) } });
+await outlet.update({kwh:message.pulses[i]});
+await outlet.save();
+    console.log(outlet);
+  }
+    let sql = 'UPDATE elcontrol SET kwh = ? where id=?';
+   // loadd.update(sql, [message.pulses[0],1])
+  //loadd.closesync()
+  
   io.to(room).emit('chat', message);
+  console.log(message);
 });
 
   // when socket disconnects, remove it from the list:
@@ -100,19 +99,12 @@ app.post("/light", auth, async  (req, res, next) => {
 
 });
 app.get("/init", auth, async (req, res, next) => {
-  try {
+  let lights=await elcontrol.findAll()
+  res.status(200).send(lights)
+   
+   
 
-    await loadd.openSqlite();
-    let sql = "SELECT * FROM elcontrol"
-    let lights = await loadd.fetchall(sql, [])
-    await loadd.close()
-    res.status(200).send(lights)
-  } catch (e) {
-    console.log(e);
-  }
-
-
-});
+  });
 
 app.post("/login", async (req, res, next) => {
   try {
@@ -125,17 +117,11 @@ app.post("/login", async (req, res, next) => {
     if (!(user && password)) {
       res.status(400).send("All input is required");
     }
-
-    // Validate if user exist in our database
-    //const user = await User.findOne({ email });
-
-    await loadd.openSqlite();
-    let sql = "SELECT * FROM auth where name=?"
-    const dbuser = await loadd.fetchone(sql, [user])
-
+    
+    const dbuser = await authorize.findOne({ where: { name: user } });
     console.log('user',dbuser);
-
-    await loadd.close()
+    
+   
 
 
 
