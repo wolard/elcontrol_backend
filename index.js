@@ -1,4 +1,3 @@
-//const modbus = require('modbus')
 const jwt = require('jsonwebtoken');
 const auth = require('./middleware/auth')
 const bcrypt = require('bcrypt')
@@ -17,8 +16,6 @@ const io = new Server(server,{
 server.listen(3000);
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
-//const gpio = require('rpi-gpio');
-const sqLiteHandler = require('./sqlitehandler/sqlitehandler')
 const statemap = require('./statemap/statemap');
 const modbushandle = require('./modbushandle/modbushandle');
 const {
@@ -50,33 +47,29 @@ let sequenceNumberByClient = new Map();
 
 
 io.on("connection",async (socket) =>  {
-  console.info(`Client connected [id=${socket.id}]`);
-  socket.join('chat')
+    console.info(`Client connected [id=${socket.id}]`);
+    socket.join('chat')
   // initialize this client's sequence number
-  sequenceNumberByClient.set(socket, 1);
-  socket.on('python message', (msg) => {
+    sequenceNumberByClient.set(socket, 1);
+    socket.on('python message', (msg) => {
     console.log('message: ' + msg);
   });
   socket.on('join', (room) => {
-    console.log(`Socket ${socket.id} joining ${room}`);
-    socket.join(room);
+      console.log(`Socket ${socket.id} joining ${room}`);
+      socket.join(room);
  });
  socket.on('chat',async (data) => {
-  const { message, room } = data;
-  console.log(`msg: ${message}, room: ${room}`);
+    const { message, room } = data;
+    console.log(`msg: ${message}, room: ${room}`);
 
-  console.log(message.pulses)
-  for (var i = 0; i < message.pulses.length; i++) {
-    const outlet = await elcontrol.findOne({ where: { id: (i+1) } });
-await outlet.update({kwh:message.pulses[i]});
-await outlet.save();
+    console.log(message.pulses)
+    for (var i = 0; i < message.pulses.length; i++) {
+      const outlet = await elcontrol.findOne({ where: { id: (i+1) } });
+    await outlet.update({kwh:message.pulses[i]});
+    await outlet.save();
     console.log(outlet);
   }
-    let sql = 'UPDATE elcontrol SET kwh = ? where id=?';
-   // loadd.update(sql, [message.pulses[0],1])
-  //loadd.closesync()
-  
-  io.to(room).emit('chat', message);
+    io.to(room).emit('chat', message);
   console.log(message);
 });
 

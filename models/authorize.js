@@ -17,7 +17,8 @@ const Authorize = sequelize.define("authorize", {
 let defaultlogin=[
     {'name':'wolard','hash':'$2b$10$o2Pju99MOZfaPqRuxCwTLe1a3qejkeB/ebJvHz.jf0gWP1u8ugFmG','role':'Admin'}
     ]
-    Authorize.sync({ force: true })
+    Authorize.sync()
+   /*
     .then(()=> {
         for (var i = 0; i < defaultlogin.length; i++) {
          
@@ -30,6 +31,7 @@ let defaultlogin=[
         }
      
   });
+  */
   return Authorize
 }
   

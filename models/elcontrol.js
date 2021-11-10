@@ -39,10 +39,11 @@ module.exports = (sequelize, Sequelize) => {
             {'card':1,'relay':12,'type':'toggle','groupname':'valot','title':'Lähestymisvalot','status':0,'kwh':0},
             
             ]
-             Elcontrol.sync({ force: true })
+             Elcontrol.sync()
        
               //User.sync({ force: true }) // Using 'force: true' for demo purposes. It drops the table users if it already exists and then creates a new one.
-                .then(()=> {
+              /*
+              .then(()=> {
                     console.log('syncing')
                   // Add default users to the database
                   for (var i = 0; i < defaultvalues.length; i++) {
@@ -61,5 +62,6 @@ module.exports = (sequelize, Sequelize) => {
                     }); 
                   }
                 });
+                */
     return Elcontrol;
   };
