@@ -25,12 +25,13 @@ will reset the interrupts.
 
 from __future__ import absolute_import, division, print_function, \
                                                     unicode_literals
-import db
+
 import time
 import threading
 import numpy as np
 import asyncio
 import socketio
+import logging
 
 try:
     from IOPi import IOPi
@@ -44,8 +45,13 @@ except ImportError:
     except ImportError:
         raise ImportError(
             "Failed to import library from parent folder")
-pulses=[0,0,0,0,0,0,0]
+pulses=[0,0,0,0,0,0,0,0]
+#pulses=np.zeros(8,dtype=np.uint8)
 
+
+
+#pulses=np.zeros(8,dtype=np.uint8)
+logging.basicConfig(level=logging.DEBUG)
 switches=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 iobus = IOPi(0x20)
@@ -67,8 +73,18 @@ iobus2.set_port_direction(1, 0xFF)
     # Invert both ports so pins will show 1 when grounded
 iobus.invert_port(0, 0xFF)
 iobus.invert_port(1, 0xFF)
-iobus.set_port_pullups(0, 0xFF)
-iobus.invert_pin(7, 0)
+iobus.invert_pin(3, 0)
+iobus.invert_pin(4, 0)
+iobus.invert_pin(5, 0)
+#iobus.invert_pin(6, 0)
+#iobus.invert_pin(7, 0)
+#iobus.invert_pin(8, 0)
+iobus.invert_pin(1, 0)
+iobus.invert_pin(2, 0)
+
+
+#iobus.invert_pin(7, 0)
+
 
 
 iobus2.invert_port(0, 0xFF)
@@ -96,18 +112,87 @@ iobus2.set_interrupt_on_port(1, 0xFF)
 
 
 class poller(threading.Thread):
+        start_time=0
+        last_time=0
+        time_between_pulses=0
         
-        def poll(self, pin):
-            while 1:            
-             # get the interrupt status for INTA
-                if iobus.read_pin(pin)==1:
+        newpulses=np.empty(0)
+        oldpulses=np.empty(0)
+        def poll(self):
+            while 1:   
                 
+                 
                 
-                    pulses[pin-1]=pulses[pin-1]+1
+                ports_on=iobus.read_port(0)    
                 
-                    time.sleep(0.5)
-                else:
-                    time.sleep(0.02)
+                if ports_on>0:
+                    
+                    
+                    poller.last_time=poller.start_time
+                    poller.start_time = time.perf_counter() 
+                    
+                    a = np.array([ports_on],dtype=np.uint8)
+                    b=np.unpackbits(a,bitorder='little')
+                    result = np.where(b == 1)
+                    logging.debug(f'{result} bits on') 
+                    poller.time_between_pulses=poller.start_time-poller.last_time
+                    logging.debug(f'{ poller.time_between_pulses} time between pulses')
+                    for r in result:
+                        for i in r:
+                            
+                           
+                               
+                                newpulses=np.append(poller.newpulses,i)
+                                logging.debug(f'{newpulses} this pulse') 
+                                #x=np.isin(newpulses,poller.oldpulses,invert=True)
+                             
+                                
+                                
+                                
+                             
+                              
+                    if poller.time_between_pulses<0.03:
+                        logging.debug('possible doublepulse')
+                        logging.debug(f'{ poller.oldpulses} pulses that came earlier')
+                        
+                        s=np.isin(newpulses,poller.oldpulses,invert=True)
+                        logging.debug(f'{s} difference')
+                        #mask=np.empty(0,dtype=np.uint8)
+                        mask=newpulses[s]
+                        poller.oldpulses=np.copy(newpulses)
+                        for x in mask:
+                            f=x.astype(np.int64)
+                            pulses[f]=pulses[f]+1
+                            logging.debug('writing pulse')
+
+                    else:
+                        logging.debug('writing normally')
+                        pulses[i]=pulses[i]+1
+                        poller.oldpulses=np.copy(newpulses)
+                                
+                                 
+                           # else: 
+                             #   pulses[i]=pulses[i]+1
+                              #  poller.oldpulses=np.copy(poller.newpulses)
+                              #  logging.debug(f'{ poller.oldpulses} copied newpulses')
+                              #  poller.newpulses=[]
+                   
+                           
+                            
+                        
+                            
+                                
+                    print(pulses)         
+                             
+                
+               
+                
+                #print(end_time-start_time)
+              
+                time.sleep(0.020)
+        
+        
+      
                  
 async def main():
 
@@ -167,9 +252,9 @@ async def main():
             
         await asyncio.sleep(1)
 poller1=poller()
-for i in range(1,10):
-    threading.Thread(target=poller1.poll, args=(i,)).daemon
-    threading.Thread(target=poller1.poll, args=(i,)).start()
+
+threading.Thread(target=poller1.poll).daemon
+threading.Thread(target=poller1.poll).start()
 
 
 

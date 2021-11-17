@@ -43,7 +43,7 @@ def main():
     # port 1 to be inputs and enable the internal pull-up resistors
     iobus1.set_port_direction(0, 0xFF)
     iobus1.set_port_pullups(0, 0xFF)
-    #iobus1.invert_port(0, 0x00)
+    iobus1.invert_port(0, 0x00)
     iobus1.invert_pin(7, 0)
 
     iobus1.set_port_direction(1, 0xFF)
@@ -63,7 +63,7 @@ def main():
 
 
      
-        val=iobus1.read_pin(7)
+        val=iobus1.read_pin(1)
         print (val)
       
       
