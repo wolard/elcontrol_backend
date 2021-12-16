@@ -115,7 +115,7 @@ exports.delete = (req, res) => {
     })
     .catch(err => {
       res.status(500).send({
-        message: "Could not delete Tutorial with id=" + id
+        message: "Could not delete Item with id=" + id
       });
     });
 };
@@ -127,12 +127,12 @@ exports.deleteAll = (req, res) => {
     truncate: false
   })
     .then(nums => {
-      res.send({ message: `${nums} Tutorials were deleted successfully!` });
+      res.send({ message: `${nums}  deleted successfully!` });
     })
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while removing all tutorials."
+          err.message || "Some error occurred while removing all items."
       });
     });
 };
@@ -146,8 +146,7 @@ exports.findAllPublished = (req, res) => {
     .catch(err => {
       res.status(500).send({
         message:
-          err.message || "Some error occurred while retrieving tutorials."
+          err.message || "Some error occurred while retrieving items."
       });
     });
 };
-e

@@ -23,14 +23,33 @@ const {
 } = require('crypto');
 app.use(cors());
 app.use(express.json());
-const db = require("./models/index.js");
-const authorize = db.authorize;
-const elcontrol=db.elcontrol;
+const Db = require('./db/db');
+const { timeStamp } = require('console');
+const {
+  Op
+} = require('sequelize');
+const { json } = require('body-parser');
 
-const Op = db.Sequelize.Op;
-
+//const Op = db.Sequelize.Op;
+let oldDate=new Date('2014-04-03');
+let newDate=new Date();
 process.env.TOKEN_SECRET;
-
+let db={};
+(async () => {
+  db = await Db.dbInit();
+  const awesomeKlaus = await db.users.findOne({
+    where: {
+        firstname: 'klaus'
+    },
+    include: db.cars
+});
+  //const json=JSON.stringify(awesomeKlaus);
+  awesomeKlaus.Cars.forEach(car => console.log(car.make, car.model))
+  //carres.forEach(car=> console.log(car))
+  //const res=JSON.parse(json)
+  // res.Cars.forEach(car => {console.log(car.model)})
+  //console.log(res[0].Cars[0].model);
+})()
 
 function hashPassword(password) {
   const salt = bcrypt.genSaltSync(10)
@@ -48,30 +67,73 @@ let sequenceNumberByClient = new Map();
 
 io.on("connection",async (socket) =>  {
     console.info(`Client connected [id=${socket.id}]`);
-    socket.join('chat')
+    
+    //socket.join('pulses')
   // initialize this client's sequence number
     sequenceNumberByClient.set(socket, 1);
-    socket.on('python message', (msg) => {
-    console.log('message: ' + msg);
-  });
-  socket.on('join', (room) => {
-      console.log(`Socket ${socket.id} joining ${room}`);
-      socket.join(room);
+   
+ 
+ socket.on('ioboard',async (data) => {
+    const { switchstate } = data;
+    try {
+    const device = await db.elControls.findOne({ where: { relay: switchstate.num } });
+    console.log(device)
+    io.emit('ioboard', switchstate);
+    }
+    catch(err)
+    {
+      console.log(err);
+    }
  });
- socket.on('chat',async (data) => {
-    const { message, room } = data;
-    console.log(`msg: ${message}, room: ${room}`);
-
-    console.log(message.pulses)
-    for (var i = 0; i < message.pulses.length; i++) {
-      const outlet = await elcontrol.findOne({ where: { id: (i+1) } });
-    await outlet.update({kwh:message.pulses[i]});
-    await outlet.save();
-    console.log(outlet);
+    socket.on('pulses',async (data) => {
+      const { pulses } = data;
+    //  console.log(data.pulses);
+  
+ 
+   
+    for (let i = 0; i < pulses.pulses.length; i++) {
+      if (pulses.pulses[i]>0) {
+      const outlet = await db.kwhs.findOne({ 
+      
+        where: {
+          elcontrolrelay:i+1,
+          createdAt: {
+            [Op.gt]: (new Date() - 60* 60 * 1000)
+          }
+        }
+       });
+   // console.log('outlet',outlet);
+     //todo write a logic that separates outlets
+      if (outlet===null)
+      {
+        console.log('creating new cell')
+        try
+        {
+        const cell=await db.kwhs.create({'elcontrolrelay':i+1,'pulses':pulses.pulses[i]})
+        }
+        catch(e)
+        {
+          console.log(e)
+        }
+      
+      
+      }
+   
+      else
+      {
+        console.log('updating hour cell');
+        //console.log(outlet);
+       
+        
+        await outlet.update({'pulses':outlet.pulses+pulses.pulses[i]});
+       const kwhs = await outlet.save();
+      //  console.log(JSON.stringify(kwhs))
+      }
+      }
   }
-    io.to(room).emit('chat', message);
-  console.log(message);
-});
+   }
+ 
+);
 
   // when socket disconnects, remove it from the list:
   socket.on("disconnect", () => {
@@ -79,10 +141,6 @@ io.on("connection",async (socket) =>  {
     console.info(`Client gone [id=${socket.id}]`);
   });
 });
-
-
-
-
 
 app.post("/light", auth, async  (req, res, next) => {
   // console.log(req.body);
@@ -92,9 +150,12 @@ app.post("/light", auth, async  (req, res, next) => {
 
 });
 app.get("/init", auth, async (req, res, next) => {
-  let lights=await elcontrol.findAll()
+ if (!(Object.entries(db).length === 0)) {
+   console.log(db)
+  //await Db.dbInit();
+  let lights=await db.elControls.findAll()
   res.status(200).send(lights)
-   
+ }
    
 
   });
@@ -111,7 +172,7 @@ app.post("/login", async (req, res, next) => {
       res.status(400).send("All input is required");
     }
     
-    const dbuser = await authorize.findOne({ where: { name: user } });
+    const dbuser = await  db.authorizes.findOne({ where: { name: user } });
     console.log('user',dbuser);
     
    
