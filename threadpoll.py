@@ -2,12 +2,12 @@
 from __future__ import absolute_import, division, print_function, \
                                                     unicode_literals
 import time
-import threading
+#import threading
 import numpy as np
 import asyncio
 import socketio
 import logging
-import datetime
+
 
 try:
     from IOPi import IOPi
@@ -31,6 +31,7 @@ logging.basicConfig(filename='poll.log', level=logging.DEBUG)
 switches=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
 pulses=[0,0,0,0,0,0,0,0]
+wattpulses=[0,0,0,0,0,0,0,0]
 iobus = IOPi(0x20)
 iobus2 = IOPi(0x21)
 
@@ -58,15 +59,7 @@ iobus.invert_pin(4, 0)
 iobus.invert_pin(5, 0)
 iobus.invert_pin(6, 0)
 
-
-
-
 #iobus.invert_pin(7, 0)
-
-
-
-
-
 
 
     # Set the interrupt polarity to be active high and mirroring disabled, so
@@ -90,7 +83,7 @@ iobus2.set_interrupt_on_port(1, 0xFF)
 sio = socketio.AsyncClient()
 
 
-class poller(threading.Thread):
+class poller():
         start_time=0
         last_time=0
         time_between_pulses=0
@@ -117,18 +110,10 @@ class poller(threading.Thread):
                    ## logging.debug(f'{result} bits on') 
                     for r in result:
                         for i in r:
-                            
-                           
-                               
-                                newpulses=np.append(newpulses,i)
-                                
-                                #x=np.isin(newpulses,poller.oldpulses,invert=True)
-                       ## logging.debug(f'{newpulses} newpulses') 
-                                
-                                
-                                
-                             
-                              
+                                       
+                            newpulses=np.append(newpulses,i)
+
+                       ## logging.debug(f'{newpulses} newpulses')                             
                     if poller.time_between_pulses<0.035:
                        ## logging.debug('possible doublepulse')
                        ## logging.debug(f'{ poller.oldpulses} pulses that came earlier')
@@ -141,6 +126,7 @@ class poller(threading.Thread):
                         for x in mask:
                             f=x.astype(np.int64)
                             pulses[f]=pulses[f]+1
+                            wattpulses[f]=wattpulses[f]+1
                         ##    logging.debug('writing pulse')
                       ##  logging.debug(f'{pulses} pulses written after compare')
                     else:
@@ -150,30 +136,59 @@ class poller(threading.Thread):
                             
                              f=x.astype(np.int64)
                              pulses[f]=pulses[f]+1
+                             wattpulses[f]=wattpulses[f]+1
                         poller.oldpulses=np.copy(newpulses)
-                        logging.debug(f'{pulses} pulses written normally')
-                                
-                                 
-                           # else: 
-                             #   pulses[i]=pulses[i]+1
-                              #  poller.oldpulses=np.copy(poller.newpulses)
-                              #  logging.debug(f'{ poller.oldpulses} copied newpulses')
-                              #  poller.newpulses=[]
-                   
-                           
-                            
-                        
-                            
-                    
-                   # print(pulses)         
-                             
-                
-               
-                
-                #print(end_time-start_time)
+                       # logging.debug(f'{pulses} pulses written normally')
+                                             
+                await asyncio.sleep(0.02)
+        async def display_pulses(self):
+   
+            while True:
+                global pulses
+                global sio
               
-                #time.sleep(0.01)
-                await asyncio.sleep(0.02j)
+                print(pulses)
+                await sio.emit('pulses',{'pulses':{'pulses':pulses}})
+                pulses=[0,0,0,0,0,0,0,0]
+                await asyncio.sleep(5)
+        async def display_watts(self):
+   
+            while True:
+                global wattpulses
+                global sio               
+                print(wattpulses)     #2000 pulses per kwh
+                watts=[0,0,0,0,0,0,0,0]
+                for i in range(len(wattpulses)):
+                    watts[i]=wattpulses[i]/2000*60*1000
+                    watts[i]=round(watts[i],0)
+                    
+                await sio.emit('watts',{'watts':watts})
+                wattpulses=[0,0,0,0,0,0,0,0]
+                await asyncio.sleep(60)
+        
+        async def pollinput(self):
+            global sio
+            while True:
+   
+                if (iobus2.read_interrupt_status(1) != 0):
+            
+         
+                    for i in range(len(switches)):
+                        pinread=iobus2.read_pin(i+1)
+                        if (pinread==1) and (pinread != switches[i]):
+                            swnum=i
+                            switches[i]=1
+                            print(switches)
+                            await sio.emit('ioboard', {'switchstate':{'num':swnum+1,'state':pinread}})
+
+                        elif (pinread==0) and (pinread != switches[i]):
+                            switches[i]=0
+                            swnum=i
+                            print(switches)
+                            await sio.emit('ioboard', {'switchstate':{'num':swnum+1,'state':pinread}})
+
+              
+                await asyncio.sleep(1)
         
 
 
@@ -187,43 +202,11 @@ class poller(threading.Thread):
 poller1=poller()
    
 
-async def display_pulses():
-   
-    while True:
-        global pulses
-        global sio
-        print(pulses)
-        await sio.emit('pulses',{'pulses':{'pulses':pulses}})
-        pulses=[0,0,0,0,0,0,0,0]
-        await asyncio.sleep(5)
-
-
-async def pollinput():
-    global sio
-    while True:
-   
-          if (iobus2.read_interrupt_status(0) != 0):
-            
-         
-            for i in range(len(switches)):
-                pinread=iobus2.read_pin(i+1)
-                if (pinread==1) and (pinread != switches[i]):
-                    swnum=i
-                    switches[i]=1
-                    print(switches)
-                    await sio.emit('ioboard', {'switchstate':{'num':swnum+1,'state':pinread}})
-
-                elif (pinread==0) and (pinread != switches[i]):
-                    switches[i]=0
-                    swnum=i
-                    print(switches)
-                    await sio.emit('ioboard', {'switchstate':{'num':swnum+1,'state':pinread}})
-
-              
-          await asyncio.sleep(1)
-
-
-
+@sio.on('switchquery')
+async def on_message(data):
+    print(data)
+    pinread=iobus2.read_pin(data) 
+    await sio.emit('ioboard', {'switchstate':{'num':data,'state':bool(pinread)}})
         
 
 async def main():
@@ -231,8 +214,9 @@ async def main():
     print('my sid is', sio.sid)
     
     await asyncio.gather(
-        display_pulses(),
-        pollinput(),
+        poller1.display_pulses(),
+        poller1.display_watts(),
+        poller1.pollinput(),
         poller1.poll()
         
        

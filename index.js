@@ -71,13 +71,24 @@ io.on("connection",async (socket) =>  {
     //socket.join('pulses')
   // initialize this client's sequence number
     sequenceNumberByClient.set(socket, 1);
+    socket.on('watts',async (data) => {
+      const { watts } = data;
+      console.log(watts)
+      try {
    
+      io.emit('watts', watts);
+      }
+      catch(err)
+      {
+        console.log(err);
+      }
+   });  
  
  socket.on('ioboard',async (data) => {
     const { switchstate } = data;
     try {
     const device = await db.elControls.findOne({ where: { relay: switchstate.num } });
-    console.log(device)
+    console.log(switchstate)
     io.emit('ioboard', switchstate);
     }
     catch(err)
@@ -88,9 +99,7 @@ io.on("connection",async (socket) =>  {
     socket.on('pulses',async (data) => {
       const { pulses } = data;
     //  console.log(data.pulses);
-  
- 
-   
+     
     for (let i = 0; i < pulses.pulses.length; i++) {
       if (pulses.pulses[i]>0) {
       const outlet = await db.kwhs.findOne({ 
@@ -146,6 +155,7 @@ app.post("/light", auth, async  (req, res, next) => {
   // console.log(req.body);
   let command = req.body;
   await modbushandle(command.relay);
+  io.emit('switchquery', command.relay);
   res.sendStatus(200);
 
 });
@@ -154,6 +164,7 @@ app.get("/init", auth, async (req, res, next) => {
    console.log(db)
   //await Db.dbInit();
   let lights=await db.elControls.findAll()
+  lights.forEach(l=>l.status=false)
   res.status(200).send(lights)
  }
    

@@ -10,15 +10,22 @@ const  connect = async () =>
 module.exports = async function writereg(...args) {
     console.log(args);
     for (i = 0; i < args.length; i++) {
-
+        try{
         await connect();
         if (0 < args[i] < 17) {
+         
             await client.writeRegister(args[i], 1280)
-                .catch(function (e) {
-                    console.log(e.message);
-                });
-            client.close(console.log("closed"));
+        
+            }
         }
+            catch(e)
+            {
+                await client.close(console.log("closed"));
+                console.log(e)
+                return false
+            }
+       
+        
     }
 
 }
