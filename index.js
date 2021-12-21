@@ -88,7 +88,12 @@ io.on("connection",async (socket) =>  {
     const { switchstate } = data;
     try {
     const device = await db.elControls.findOne({ where: { relay: switchstate.num } });
-    console.log(switchstate)
+    let status = switchstate.state ? 1 : 0;
+    console.log('status',status)
+    await device.update({'status':status})
+    await device.save()
+    console.log(device)
+    console.log('current switches',switchstate)
     io.emit('ioboard', switchstate);
     }
     catch(err)
@@ -155,8 +160,10 @@ app.post("/light", auth, async  (req, res, next) => {
   // console.log(req.body);
   let command = req.body;
   await modbushandle(command.relay);
-  io.emit('switchquery', command.relay);
-  res.sendStatus(200);
+    io.emit('switchquery', command.relay);
+    res.sendStatus(200);
+  
+ 
 
 });
 app.get("/init", auth, async (req, res, next) => {
@@ -164,7 +171,7 @@ app.get("/init", auth, async (req, res, next) => {
    console.log(db)
   //await Db.dbInit();
   let lights=await db.elControls.findAll()
-  lights.forEach(l=>l.status=false)
+ // lights.forEach(l=>l.status=false)
   res.status(200).send(lights)
  }
    

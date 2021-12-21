@@ -21,8 +21,8 @@ module.exports = async function writereg(...args) {
             catch(e)
             {
                 await client.close(console.log("closed"));
-                console.log(e)
-                return false
+               // console.log(e)
+               // return false
             }
        
         

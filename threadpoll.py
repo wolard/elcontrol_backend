@@ -200,12 +200,14 @@ class poller():
 #threading.Thread(target=poller1.poll).daemon
 #threading.Thread(target=poller1.poll).start()
 poller1=poller()
-   
+
 
 @sio.on('switchquery')
 async def on_message(data):
     print(data)
+    await asyncio.sleep(0.1)
     pinread=iobus2.read_pin(data) 
+    print(pinread)
     await sio.emit('ioboard', {'switchstate':{'num':data,'state':bool(pinread)}})
         
 
