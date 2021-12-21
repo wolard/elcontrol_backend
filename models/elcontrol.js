@@ -22,7 +22,7 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING
     },
     status: {
-      type: DataTypes.Boo
+      type: DataTypes.INTEGER
     },
     kwh: {
       type: DataTypes.INTEGER
