@@ -13,7 +13,7 @@ const io = new Server(server,{
   },
 });
  
-server.listen(3000);
+server.listen(1111);
 const cors = require('cors')
 const ModbusRTU = require("modbus-serial");
 const statemap = require('./statemap/statemap');
@@ -29,6 +29,7 @@ const {
   Op
 } = require('sequelize');
 const { json } = require('body-parser');
+
 
 //const Op = db.Sequelize.Op;
 let oldDate=new Date('2014-04-03');
