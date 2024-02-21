@@ -6,3 +6,4 @@ package-lock.json
 test/*.log
 .env
 __pycache__/db.cpython-37.pyc
+dist/

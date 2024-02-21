@@ -1,8 +1,8 @@
-const jwt = require('jsonwebtoken');
-
-const verifyToken = (req, res, next) => {
+import { Express, Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken'
+export const verifyToken = (req:Request, res:Response, next:NextFunction):any => {
   const token =
-  req.headers["x-access-token"];
+  req.headers["x-access-token"] as string;
   //console.log('headers', req.headers["x-access-token"])
 
   if (!token) {
@@ -11,11 +11,9 @@ const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token,'dinfwicbnweiocnoweic');
    
-   req.user = decoded;
+   //req. .user = decoded;
   } catch (err) {
     return res.status(401).send("Invalid Token");
   }
   return next();
 };
-
-module.exports=verifyToken

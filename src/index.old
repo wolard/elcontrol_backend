@@ -1,12 +1,19 @@
-const jwt = require('jsonwebtoken');
-const auth = require('./middleware/auth')
-const bcrypt = require('bcrypt')
+//const jwt = require('jsonwebtoken');
+//import jwt from 'jsonwebtoken'
+//const auth = require('./middleware/auth')
+//import auth from './middleware/auth'
+//const bcrypt = require('bcrypt')
+import { expressjwt } from "express-jwt";
+import bcrypt from 'bcrypt'
 const dotenv = require('dotenv');
-const express = require('express');
+//const express = require('express');
+import express from 'express';
 const app = express();
-const http = require('http');
+//const http = require('http');
+import http from 'http';
 const server = http.createServer(app);
-const { Server } = require("socket.io");
+import{Server} from 'socket.io'
+//const { Server } = require("socket.io");
 const io = new Server(server,{
   cors: {
     origin: "*",
@@ -14,8 +21,9 @@ const io = new Server(server,{
 });
  
 server.listen(1111);
-const cors = require('cors')
-const ModbusRTU = require("modbus-serial");
+import cors from 'cors'
+import ModbusRTU from 'modbus-serial'
+
 const statemap = require('./statemap/statemap');
 const modbushandle = require('./modbushandle/modbushandle');
 const {
@@ -52,7 +60,7 @@ let db={};
   //console.log(res[0].Cars[0].model);
 })()
 
-function hashPassword(password) {
+function hashPassword(password:string) {
   const salt = bcrypt.genSaltSync(10)
   return bcrypt.hashSync(password, salt)
 
@@ -108,7 +116,7 @@ io.on("connection",async (socket) =>  {
      
     for (let i = 0; i < pulses.pulses.length; i++) {
       if (pulses.pulses[i]>0) {
-      const outlet = await db.kwhs.findOne({ 
+      const outlet = await kwh.findOne({ 
       
         where: {
           elcontrolrelay:i+1,
@@ -167,7 +175,7 @@ app.post("/light", auth, async  (req, res, next) => {
  
 
 });
-app.get("/init", auth, async (req, res, next) => {
+app.get("/init", expressjwt({ secret: "dinfwicbnweiocnoweic", algorithms: ["HS256"] }), async (req, res, next) => {
  if (!(Object.entries(db).length === 0)) {
    console.log(db)
   //await Db.dbInit();
