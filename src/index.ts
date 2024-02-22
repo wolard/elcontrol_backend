@@ -20,6 +20,7 @@ app.use(express.json());
 import http from 'http';
 const server = http.createServer(app);
 import{Server} from 'socket.io'
+import { writereg } from './modbushandle/modbushandle';
 //const { Server } = require("socket.io");
 //const io = socketIo(server);
 const io = new Server(server,{
@@ -110,3 +111,16 @@ app.get("/init", async (req, res, next) => {
       res.sendStatus(200);
     }
   );
+
+  app.post("/light",  async (req, res, next) => {
+    // console.log(req.body);
+    let command = req.body.val;
+    await writereg(command)
+   
+      io.emit('switchquery', command.relay);
+      res.sendStatus(200);
+    
+   
+  
+  });
+

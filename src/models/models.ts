@@ -13,7 +13,6 @@ interface AuthAttributes {
   username: string
   hash: string
   role: string
-  token?:string
 }
 export interface AuthCreationAttributes extends Optional<AuthAttributes, 'id'> {}
 @Table

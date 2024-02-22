@@ -43,6 +43,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.17",
     "@types/validator": "^13.11.9",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.1"
   }
 }
