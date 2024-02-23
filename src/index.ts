@@ -1,29 +1,26 @@
 import { Sequelize } from 'sequelize-typescript';
 import {seedDb} from './db/db';
 import { dbConf } from './db/dbconf';
-import { Authorize, Elcontrol, Users } from './models/models';
-import jwt from 'jsonwebtoken';
-//const auth = require('./middleware/auth')
-//import auth from './middleware/auth'
-//const bcrypt = require('bcrypt')
 import { expressjwt, Request as JWTRequest } from "express-jwt";
-import bcrypt from 'bcrypt'
-const dotenv = require('dotenv');
-//const express = require('express');
+import 'dotenv/config'
 import express  from 'express';
-
 import cors from 'cors'
+import loginRouter from './routes/login';
+import initRouter from './routes/init';
+import lightRouter from './routes/light';
 const app = express();
 app.use(cors());
 app.use(express.json());
-//const http = require('http');
+app.use(loginRouter)
+app.use(initRouter)
+app.use(lightRouter)
+
 import http from 'http';
 const server = http.createServer(app);
+
 import{Server} from 'socket.io'
-import { writereg } from './modbushandle/modbushandle';
-//const { Server } = require("socket.io");
-//const io = socketIo(server);
-const io = new Server(server,{
+
+export const io = new Server(server,{
   cors: {
     origin: "*",
   },
@@ -32,7 +29,6 @@ const io = new Server(server,{
 server.listen(1111, () => {
   console.log(`Server is running on port ${1111}`);
 });
-console.log('star');
 const sequelize = new Sequelize(dbConf);
 (async () => {
 
@@ -42,66 +38,9 @@ const sequelize = new Sequelize(dbConf);
  // console.log('usr',usr)
 
 })();
-app.post("/login", async (req, res, next) => {
-  console.log('req',req.body)
-   try {
-
-    const {
-      user,
-      password
-    } = req.body; 
-
-    if (!(user && password)) {
-      res.status(400).send("All input is required");
-    }
-    
-    let dbuser = await  Authorize.findOne({ where: { username: user } });
-    console.log('user',dbuser);
-    
-   
 
 
 
-    if (dbuser && (await bcrypt.compare(password, dbuser.hash))) {
-      //if(user){ 
-      // Create token
-      const token = jwt.sign({
-          user: dbuser.username,
-          role:dbuser.role
-        },
-        //  process.env.TOKEN_KEY,
-        'dinfwicbnweiocnoweic', {
-          expiresIn: "2h",
-          
-        }
-      );
-
-      
-      console.log('token',token);
-
-      // user
-      res.status(200).send({
-        user: dbuser.username,
-        token: token
-      });
-    } else res.status(400).send("Invalid Credentials");
-  } catch (err) {
-    console.log(err);
-  }
-  // Our register logic ends here
-});
-
-app.get("/init", async (req, res, next) => {
-
-
-   //await Db.dbInit();
-   let lights=await Elcontrol.findAll()
-  // lights.forEach(l=>l.status=false)
-   res.status(200).send(lights)
-  
-    
- 
-   });
    app.get(
     "/protected",
     expressjwt({ secret: "dinfwicbnweiocnoweic", algorithms: ["HS256"] }),
@@ -112,15 +51,5 @@ app.get("/init", async (req, res, next) => {
     }
   );
 
-  app.post("/light",  async (req, res, next) => {
-    // console.log(req.body);
-    let command = req.body.val;
-    await writereg(command)
-   
-      io.emit('switchquery', command.relay);
-      res.sendStatus(200);
-    
-   
-  
-  });
+ 
 
