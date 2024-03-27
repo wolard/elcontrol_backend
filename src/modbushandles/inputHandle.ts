@@ -1,4 +1,5 @@
 import ModbusRTU from "modbus-serial";
+import { IoutletData } from "../routes/lights";
 const client = new ModbusRTU();
 const  connect = async () =>
 {
@@ -7,15 +8,15 @@ const  connect = async () =>
  client.setTimeout(100);
 
 }
-export const  writereg =async (reg:number):Promise<boolean>=> {
-    console.log('reg',reg);
+export const  writereg =async (outlet:IoutletData):Promise<boolean>=> {
+    console.log('outlet',outlet);
  
         try
         {
         await connect();
-        if (( reg<0)&&( reg>17)) {
+        if (( outlet.relay<0)&&( outlet.relay>17)) {
          
-            await client.writeRegister(reg, 1280)
+            await client.writeRegister(outlet.relay, 1280)
             return true
             }
         }

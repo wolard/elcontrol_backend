@@ -8,4 +8,5 @@ test/*.log
 __pycache__/db.cpython-37.pyc
 dist/
 database.db
+src/public/
 

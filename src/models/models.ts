@@ -7,6 +7,8 @@ import {
   ForeignKey,
   BelongsTo,
   HasMany,
+  DefaultScope,
+  Scopes,
 } from "sequelize-typescript";
 interface AuthAttributes {
   id: number
@@ -76,13 +78,32 @@ interface ElControlAttributes {
   card: number;
   relay: number;
   type?: string;
-  groupname?: string;
+  groupname: string;
   title?: string;
-  status:0|1
+  status:number
   kwh?:number
   kwhs?:Kwh[]
 }
 export interface ElControlCreationAttributes extends Optional<ElControlAttributes, 'id'> {}
+
+@DefaultScope(() => ({
+  attributes: [
+    'card',
+    'relay',
+    'type',
+    'groupname',
+    'title',
+    'status',
+    'kwh']
+}))
+@Scopes(() => ({
+  full: {
+    include: [Kwh]
+  },
+  lights: {
+    where: {groupname : 'valot' }
+  }
+}))
 @Table({ timestamps: false })
 export class Elcontrol extends Model<ElControlAttributes,ElControlCreationAttributes> {
   @Column
@@ -100,7 +121,7 @@ export class Elcontrol extends Model<ElControlAttributes,ElControlCreationAttrib
   title?: string;
 
   @Column
-  status!: 0|1;
+  status!: boolean;
 
   @Column
   kwh?: number;
