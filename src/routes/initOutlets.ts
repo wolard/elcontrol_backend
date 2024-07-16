@@ -1,11 +1,9 @@
 import { Router,} from "express";
-import { Elcontrol } from "../models/models";
-import cors from "cors";
-import { where } from "sequelize";
 import express  from 'express';
 import { expressjwt, Request as JWTRequest } from "express-jwt";
-import { readwatts } from "..";
-import { readOutputs } from "../modbushandles/modbushandle";
+
+import { outlets} from "..";
+import { queue } from "../queue/queue";
 
 const initOutletsRouter = Router();
 let corsOptions = { 
@@ -16,11 +14,12 @@ initOutletsRouter.get(
     expressjwt({ secret: "dinfwicbnweiocnoweic", algorithms: ["HS256"] })  ,
  async function (req:JWTRequest, res: express.Response) {
   console.log('authreq',req.auth)
+  await queue.push({args:undefined,actionType:'readWatts'})
 
-  const outlets=await Elcontrol.findAll({where:{groupname:'pistorasiat'}})
- const statuses=await readOutputs(10)
- outlets.forEach(out=>{out.status=statuses![out.relay] })
- console.log('outlets',outlets)
+  //const outlets=await Elcontrol.findAll({where:{groupname:'pistorasiat'}})
+
+ //outlets.forEach(out=>{out.status=statuses![out.relay] })
+ //console.log('outlets',outlets)
  res.status(200).send(outlets)
 
 

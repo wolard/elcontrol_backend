@@ -80,7 +80,6 @@ interface ElControlAttributes {
   type?: string;
   groupname: string;
   title?: string;
-  status:number
   kwh?:number
   kwhs?:Kwh[]
 }
@@ -93,7 +92,6 @@ export interface ElControlCreationAttributes extends Optional<ElControlAttribute
     'type',
     'groupname',
     'title',
-    'status',
     'kwh']
 }))
 @Scopes(() => ({
@@ -120,8 +118,8 @@ export class Elcontrol extends Model<ElControlAttributes,ElControlCreationAttrib
   @Column
   title?: string;
 
-  @Column
-  status!: boolean;
+/*   @Column
+  status!: boolean; */
 
   @Column
   kwh?: number;
